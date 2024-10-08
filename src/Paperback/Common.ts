@@ -3,7 +3,7 @@ import { SearchRequest,
     SourceStateManager,
     RequestManager,
     Response } from '@paperback/types'
-import { PageBookDto, PageSeriesDto } from './data-contracts'
+import { PageSeriesDto } from './data-contracts'
 export function getServerUnavailableMangaTiles() {
     // This tile is used as a placeholder when the server is unavailable
     return [
