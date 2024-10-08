@@ -30,6 +30,7 @@ import { getAuthorizationString,
     getOptions,
     getServerUnavailableMangaTiles,
     searchRequest, } from './Common'
+import { BookDto, LibraryDto, PageBookDto, PageCollectionDto, PageDto, ReadProgressUpdateDto, SeriesDto } from './data-contracts'
 // This source use Komga REST API
 // https://komga.org/guides/rest.html
 // Manga are represented by `series`
@@ -177,16 +178,16 @@ export class Paperback extends Source {
             ]
         }
         // The following part of the function should throw if there is an error and thus is not in the try/catch block
-        const genresResult = typeof genresResponse.data === 'string'
+        const genresResult: string[] = typeof genresResponse.data === 'string'
             ? JSON.parse(genresResponse.data)
             : genresResponse.data
-        const tagsResult = typeof tagsResponse.data === 'string'
+        const tagsResult: string[] = typeof tagsResponse.data === 'string'
             ? JSON.parse(tagsResponse.data)
             : tagsResponse.data
-        const collectionResult = typeof collectionResponse.data === 'string'
+        const collectionResult: PageCollectionDto = typeof collectionResponse.data === 'string'
             ? JSON.parse(collectionResponse.data)
             : collectionResponse.data
-        const libraryResult = typeof libraryResponse.data === 'string'
+        const libraryResult: LibraryDto[] = typeof libraryResponse.data === 'string'
             ? JSON.parse(libraryResponse.data)
             : libraryResponse.data
         const tagSections: [
@@ -203,15 +204,15 @@ export class Paperback extends Source {
         // For each tag, we append a type identifier to its id and capitalize its label
         tagSections[0].tags = genresResult.map((elem: string) => App.createTag({ id: 'genre-' + elem, label: capitalize(elem) }))
         tagSections[1].tags = tagsResult.map((elem: string) => App.createTag({ id: 'tag-' + elem, label: capitalize(elem) }))
-        tagSections[2].tags = collectionResult.content.map((elem: {
+        tagSections[2].tags = collectionResult.content?.map((elem: {
             name: string;
             id: string;
-        }) => App.createTag({ id: 'collection-' + elem.id, label: capitalize(elem.name) }))
+        }) => App.createTag({ id: 'collection-' + elem.id, label: capitalize(elem.name) })) ?? []
         tagSections[3].tags = libraryResult.map((elem: {
             name: string;
             id: string;
         }) => App.createTag({ id: 'library-' + elem.id, label: capitalize(elem.name) }))
-        if (collectionResult.content.length <= 1) {
+        if ((collectionResult.content?.length ?? 0) <= 1) {
             tagSections.splice(2, 1)
         }
         return tagSections
@@ -226,7 +227,7 @@ export class Paperback extends Source {
             method: 'GET'
         })
         const response = await this.requestManager.schedule(request, 1)
-        const result = typeof response.data === 'string'
+        const result: SeriesDto = typeof response.data === 'string'
             ? JSON.parse(response.data)
             : response.data
         const metadata = result.metadata
@@ -276,7 +277,7 @@ export class Paperback extends Source {
             method: 'GET'
         })
         const booksResponse = await this.requestManager.schedule(booksRequest, 1)
-        const booksResult = typeof booksResponse.data === 'string'
+        const booksResult: PageBookDto = typeof booksResponse.data === 'string'
             ? JSON.parse(booksResponse.data)
             : booksResponse.data
         const chapters: Chapter[] = []
@@ -286,11 +287,11 @@ export class Paperback extends Source {
             method: 'GET'
         })
         const serieResponse = await this.requestManager.schedule(serieRequest, 1)
-        const serieResult = typeof serieResponse.data === 'string'
+        const serieResult: SeriesDto = typeof serieResponse.data === 'string'
             ? JSON.parse(serieResponse.data)
             : serieResponse.data
         const languageCode = parseLangCode(serieResult.metadata.language)
-        for (const book of booksResult.content) {
+        for (const book of booksResult.content ?? []) {
             chapters.push(App.createChapter({
                 id: book.id,
                 chapNum: parseFloat(book.metadata.number),
@@ -310,7 +311,7 @@ export class Paperback extends Source {
             method: 'GET'
         })
         const data = await this.requestManager.schedule(request, 1)
-        const result = typeof data.data === 'string' ? JSON.parse(data.data) : data.data
+        const result: PageDto[] = typeof data.data === 'string' ? JSON.parse(data.data) : data.data
         const pages: string[] = []
         for (const page of result) {
             if (SUPPORTED_IMAGE_TYPES.includes(page.mediaType)) {
@@ -326,7 +327,7 @@ export class Paperback extends Source {
             method: 'GET'
         })
         const serieResponse = await this.requestManager.schedule(serieRequest, 1)
-        const serieResult = typeof serieResponse.data === 'string'
+        const serieResult: SeriesDto = typeof serieResponse.data === 'string'
             ? JSON.parse(serieResponse.data)
             : serieResponse.data
         let longStrip = false
@@ -395,7 +396,7 @@ export class Paperback extends Source {
         for (const section of sections) {
             // Let the app load empty tagSections
             sectionCallback(section)
-            let apiPath: string, thumbPath: string, params: string, idProp: string
+            let apiPath: string, thumbPath: string, params: string, idProp: keyof BookDto
             switch (section.id) {
                 case 'ondeck':
                     apiPath = `${komgaAPI}/books/${section.id}`
@@ -422,9 +423,15 @@ export class Paperback extends Source {
                 method: 'GET'
             })
             // Get the section data
-            promises.push(this.requestManager.schedule(request, 1).then((data) => {
-                const result = typeof data.data === 'string' ? JSON.parse(data.data) : data.data
+            promises.push((async () => {
+                const data = await this.requestManager.schedule(request, 1)
+                const result: PageBookDto = typeof data.data === 'string' ? JSON.parse(data.data) : data.data
+
                 const tiles = []
+                if (!result.content) {
+                    return
+                }
+
                 for (const serie of result.content) {
                     tiles.push(App.createPartialSourceManga({
                         title: serie.metadata.title,
@@ -433,9 +440,10 @@ export class Paperback extends Source {
                         subtitle: undefined
                     }))
                 }
+
                 section.items = tiles
                 sectionCallback(section)
-            }))
+            })())
         }
         // Make sure the function completes
         await Promise.all(promises)
@@ -449,9 +457,9 @@ export class Paperback extends Source {
             method: 'GET'
         })
         const data = await this.requestManager.schedule(request, 1)
-        const result = typeof data.data === 'string' ? JSON.parse(data.data) : data.data
+        const result: PageBookDto = typeof data.data === 'string' ? JSON.parse(data.data) : data.data
         const tiles: PartialSourceManga[] = []
-        for (const serie of result.content) {
+        for (const serie of result.content ?? []) {
             tiles.push(App.createPartialSourceManga({
                 title: serie.metadata.title,
                 image: `${komgaAPI}/series/${serie.id}/thumbnail`,
@@ -481,12 +489,12 @@ export class Paperback extends Source {
                 method: 'GET'
             })
             const data = await this.requestManager.schedule(request, 1)
-            const result = typeof data.data === 'string' ? JSON.parse(data.data) : data.data
-            for (const serie of result.content) {
+            const result: PageBookDto = typeof data.data === 'string' ? JSON.parse(data.data) : data.data
+            for (const serie of result.content ?? []) {
                 const serieUpdated = new Date(serie.metadata.lastModified)
                 if (serieUpdated >= time) {
-                    if (ids.includes(serie)) {
-                        foundIds.push(serie)
+                    if (ids.includes(serie.id)) {
+                        foundIds.push(serie.id)
                     }
                 }
                 else {
@@ -495,7 +503,7 @@ export class Paperback extends Source {
                 }
             }
             // If no series were returned we are on the last page
-            if (result.content.length === 0) {
+            if (result.content?.length === 0) {
                 loadMore = false
             }
             page = page + 1
@@ -553,7 +561,7 @@ export class Paperback extends Source {
                         data: {
                             'page': 1,
                             'completed': true
-                        }
+                        } as ReadProgressUpdateDto
                     })
                   
                     const response = await this.requestManager.schedule(request, 1)

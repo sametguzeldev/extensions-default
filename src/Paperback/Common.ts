@@ -3,6 +3,7 @@ import { SearchRequest,
     SourceStateManager,
     RequestManager,
     Response } from '@paperback/types'
+import { PageBookDto, PageSeriesDto } from './data-contracts'
 export function getServerUnavailableMangaTiles() {
     // This tile is used as a placeholder when the server is unavailable
     return [
@@ -73,9 +74,9 @@ export async function searchRequest(searchQuery: SearchRequest, metadata: any, r
             results: getServerUnavailableMangaTiles()
         })
     }
-    const result = typeof data.data === 'string' ? JSON.parse(data.data) : data.data
+    const result: PageSeriesDto = typeof data.data === 'string' ? JSON.parse(data.data) : data.data
     const tiles = []
-    for (const serie of result.content) {
+    for (const serie of result.content ?? []) {
         tiles.push(App.createPartialSourceManga({
             title: serie.metadata.title,
             image: `${komgaAPI}/series/${serie.id}/thumbnail`,
