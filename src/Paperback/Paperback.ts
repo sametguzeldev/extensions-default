@@ -90,11 +90,8 @@ export class KomgaRequestInterceptor implements SourceInterceptor {
         return response
     }
     async interceptRequest(request: Request): Promise<Request> {
-        //
-        // Paper's Note: Reopen a new merge request if downloads break again,
-        // pages stopped loading because of this on iOS 17.0
-        //
-        // // NOTE: Doing it like this will make downloads work tried every other method did not work, if there is a better method make edit it and make pull request
+        // Paper's Note: This hack no longer works on iOS 17
+        // ORIGINAL NOTE: Doing it like this will make downloads work tried every other method did not work, if there is a better method make edit it and make pull request
         // if (request.url.includes('intercept*')) {
         //     const url = request?.url?.split('*').pop() ?? ''
         //     request.headers = {
@@ -103,7 +100,6 @@ export class KomgaRequestInterceptor implements SourceInterceptor {
         //     request.url = url
         //     return request
         // }
-
         if (request.headers === undefined) {
             request.headers = {}
         }
