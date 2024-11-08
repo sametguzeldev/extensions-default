@@ -44,7 +44,7 @@ import { BookDto, LibraryDto, PageBookDto, PageCollectionDto, PageDto, ReadProgr
 //  - getTags() which is called on the homepage
 //  - search method which is called even if the user search in an other source
 export const PaperbackInfo: SourceInfo = {
-    version: '1.3',
+    version: '1.3.1',
     name: 'Paperback',
     icon: 'icon.png',
     author: 'Lemon | Faizan Durrani',
@@ -100,18 +100,21 @@ export class KomgaRequestInterceptor implements SourceInterceptor {
         //     request.url = url
         //     return request
         // }
-        if (request.headers === undefined) {
-            request.headers = {}
-        }
+        const headers = request.headers ?? {}
 
         // We mustn't call this.getAuthorizationString() for the stateful submission request.
         // This procedure indeed catchs the request used to check user credentials
         // which can happen before an authorizationString is saved,
         // raising an error in getAuthorizationString when we check for its existence
         // Thus we only inject an authorizationString if none are defined in the request
-        if (request.headers.authorization === undefined) {
-            request.headers.authorization = await getAuthorizationString(this.stateManager)
+        if (headers.authorization === undefined) {
+            headers.authorization = await getAuthorizationString(this.stateManager)
         }
+
+        // Paper's Note:
+        //  Apparently setting a property on the `headers` object doesnt map over to swift
+        //  we NEED to reset the base object for swift to realise its been changed
+        request.headers = headers
         return request
     }
 }
