@@ -18,6 +18,8 @@ import { Chapter,
     SourceInterceptor, 
     SourceIntents,
     TrackerActionQueue,
+    MangaProgress,
+    MangaProgressProviding,
     DUIForm
 } from '@paperback/types'
 import { parseLangCode } from './Languages'
@@ -30,7 +32,6 @@ import { getAuthorizationString,
     getServerUnavailableMangaTiles,
     searchRequest, } from './Common'
 import { BookDto, LibraryDto, PageBookDto, PageCollectionDto, PageDto, ReadProgressUpdateDto, SeriesDto } from './data-contracts'
-import {MangaProgress} from "@paperback/types/lib";
 // This source use Komga REST API
 // https://komga.org/guides/rest.html
 // Manga are represented by `series`
