@@ -17,7 +17,6 @@ import { Chapter,
     BadgeColor,
     SourceInterceptor, 
     SourceIntents,
-    MangaProgressProviding,
     TrackerActionQueue,
     DUIForm
 } from '@paperback/types'
@@ -31,6 +30,7 @@ import { getAuthorizationString,
     getServerUnavailableMangaTiles,
     searchRequest, } from './Common'
 import { BookDto, LibraryDto, PageBookDto, PageCollectionDto, PageDto, ReadProgressUpdateDto, SeriesDto } from './data-contracts'
+import {MangaProgress} from "@paperback/types/lib";
 // This source use Komga REST API
 // https://komga.org/guides/rest.html
 // Manga are represented by `series`
@@ -540,8 +540,34 @@ export class Paperback extends Source {
                 return Promise.resolve()
             },
         })
-    } 
+    }
 
+    async getMangaProgress(mangaId: string): Promise<MangaProgress | undefined> {
+        const komgaAPI = await getKomgaAPI(this.stateManager);
+        if (komgaAPI == null) {
+            console.log('Komga API is not set');
+            return undefined;
+        }
+
+        const response = await this.requestManager.schedule(
+            App.createRequest({
+                url: `${komgaAPI}/series/${mangaId}/`,
+                method: 'GET',
+            }),
+            1,
+        );
+
+        const result = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+        if (result?.booksCount == null) {
+            return undefined;
+        }
+
+        return App.createMangaProgress({
+            mangaId,
+            lastReadChapterNumber: result.booksReadCount,
+        });
+    }
+    
     async processChapterReadActionQueue(actionQueue: TrackerActionQueue): Promise<void>  {
         const chapterReadActions = await actionQueue.queuedChapterReadActions()
         const komgaAPI = await getKomgaAPI(this.stateManager)
