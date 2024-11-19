@@ -45,7 +45,7 @@ import { BookDto, LibraryDto, PageBookDto, PageCollectionDto, PageDto, ReadProgr
 //  - getTags() which is called on the homepage
 //  - search method which is called even if the user search in an other source
 export const PaperbackInfo: SourceInfo = {
-    version: '1.3.2',
+    version: '1.3.3',
     name: 'Paperback',
     icon: 'icon.png',
     author: 'Samet | Lemon | Faizan Durrani',
@@ -120,7 +120,7 @@ export class KomgaRequestInterceptor implements SourceInterceptor {
         return request
     }
 }
-export class Paperback extends Source {
+export class Paperback extends Source implements MangaProgressProviding {
     stateManager = App.createSourceStateManager();
     requestManager = App.createRequestManager({
         requestsPerSecond: 4,
