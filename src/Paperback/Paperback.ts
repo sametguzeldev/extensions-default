@@ -44,10 +44,10 @@ import {MangaProgress} from "@paperback/types/lib";
 //  - getTags() which is called on the homepage
 //  - search method which is called even if the user search in an other source
 export const PaperbackInfo: SourceInfo = {
-    version: '1.3.1',
+    version: '1.3.2',
     name: 'Paperback',
     icon: 'icon.png',
-    author: 'Lemon | Faizan Durrani',
+    author: 'Samet | Lemon | Faizan Durrani',
     authorWebsite: 'https://github.com/FramboisePi',
     description: 'Komga client extension for Paperback',
     contentRating: ContentRating.EVERYONE,
@@ -475,6 +475,7 @@ export class Paperback extends Source {
     }
 
     async filterUpdatedManga(mangaUpdatesFoundCallback: (updates: MangaUpdates) => void, time: Date, ids: string[]): Promise<void> {
+        console.log("Filtering updated manga")
         const komgaAPI = await getKomgaAPI(this.stateManager)
         // We make requests of PAGE_SIZE titles to `series/updated/` until we got every titles
         // or we got a title which `lastModified` metadata is older than `time`
@@ -515,6 +516,7 @@ export class Paperback extends Source {
     }
 
     async getMangaProgressManagementForm(mangaId: string): Promise<DUIForm>  {
+        console.log("Getting manga progress management form")
         return App.createDUIForm({
             sections: async () => {
                 return [
@@ -543,6 +545,7 @@ export class Paperback extends Source {
     }
 
     async getMangaProgress(mangaId: string): Promise<MangaProgress | undefined> {
+        console.log("Getting manga progress")
         const komgaAPI = await getKomgaAPI(this.stateManager);
         if (komgaAPI == null) {
             console.log('Komga API is not set');
@@ -569,6 +572,7 @@ export class Paperback extends Source {
     }
     
     async processChapterReadActionQueue(actionQueue: TrackerActionQueue): Promise<void>  {
+        console.log("Processing chapter read actions")
         const chapterReadActions = await actionQueue.queuedChapterReadActions()
         const komgaAPI = await getKomgaAPI(this.stateManager)
 
