@@ -111,6 +111,7 @@ export class KomgaRequestInterceptor implements SourceInterceptor {
             headers.authorization = await getAuthorizationString(this.stateManager)
         }
 
+        console.log("annen burada")
         // Paper's Note:
         //  Apparently setting a property on the `headers` object doesnt map over to swift
         //  we NEED to reset the base object for swift to realise its been changed
@@ -214,6 +215,8 @@ export class Paperback extends Source {
         if ((collectionResult.content?.length ?? 0) <= 1) {
             tagSections.splice(2, 1)
         }
+        console.log("Yada burada olabilir")
+        
         return tagSections
     }
     async getMangaDetails(mangaId: string): Promise<SourceManga> {
