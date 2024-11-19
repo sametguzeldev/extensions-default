@@ -2717,7 +2717,7 @@ const Common_1 = require("./Common");
 //  - getTags() which is called on the homepage
 //  - search method which is called even if the user search in an other source
 exports.PaperbackInfo = {
-    version: '1.3.3',
+    version: '1.3.4',
     name: 'Paperback',
     icon: 'icon.png',
     author: 'Samet | Lemon | Faizan Durrani',
@@ -2791,9 +2791,9 @@ class Paperback extends types_1.Source {
         super(...arguments);
         this.stateManager = App.createSourceStateManager();
         this.requestManager = App.createRequestManager({
-            requestsPerSecond: 4,
+            requestsPerSecond: 5,
             requestTimeout: 20000,
-            interceptor: new KomgaRequestInterceptor(this.stateManager)
+            interceptor: new KomgaRequestInterceptor(this.stateManager),
         });
     }
     async getSourceMenu() {
@@ -2805,7 +2805,7 @@ class Paperback extends types_1.Source {
                 (0, Settings_1.serverSettingsMenu)(this.stateManager),
                 (0, Settings_1.testServerSettingsMenu)(this.stateManager, this.requestManager),
                 (0, Settings_1.resetSettingsButton)(this.stateManager),
-            ]
+            ],
         });
     }
     async getTags() {
@@ -2822,44 +2822,34 @@ class Paperback extends types_1.Source {
             const komgaAPI = await (0, Common_1.getKomgaAPI)(this.stateManager);
             const genresRequest = App.createRequest({
                 url: `${komgaAPI}/genres`,
-                method: 'GET'
+                method: 'GET',
             });
             genresResponse = await this.requestManager.schedule(genresRequest, 1);
             const tagsRequest = App.createRequest({
                 url: `${komgaAPI}/tags/series`,
-                method: 'GET'
+                method: 'GET',
             });
             tagsResponse = await this.requestManager.schedule(tagsRequest, 1);
             const collectionRequest = App.createRequest({
                 url: `${komgaAPI}/collections`,
-                method: 'GET'
+                method: 'GET',
             });
             collectionResponse = await this.requestManager.schedule(collectionRequest, 1);
             const libraryRequest = App.createRequest({
                 url: `${komgaAPI}/libraries`,
-                method: 'GET'
+                method: 'GET',
             });
             libraryResponse = await this.requestManager.schedule(libraryRequest, 1);
         }
         catch (error) {
             console.log(`getTags failed with error: ${error}`);
-            return [
-                App.createTagSection({ id: '-1', label: 'Server unavailable', tags: [] }),
-            ];
+            return [App.createTagSection({ id: '-1', label: 'Server unavailable', tags: [] })];
         }
         // The following part of the function should throw if there is an error and thus is not in the try/catch block
-        const genresResult = typeof genresResponse.data === 'string'
-            ? JSON.parse(genresResponse.data)
-            : genresResponse.data;
-        const tagsResult = typeof tagsResponse.data === 'string'
-            ? JSON.parse(tagsResponse.data)
-            : tagsResponse.data;
-        const collectionResult = typeof collectionResponse.data === 'string'
-            ? JSON.parse(collectionResponse.data)
-            : collectionResponse.data;
-        const libraryResult = typeof libraryResponse.data === 'string'
-            ? JSON.parse(libraryResponse.data)
-            : libraryResponse.data;
+        const genresResult = typeof genresResponse.data === 'string' ? JSON.parse(genresResponse.data) : genresResponse.data;
+        const tagsResult = typeof tagsResponse.data === 'string' ? JSON.parse(tagsResponse.data) : tagsResponse.data;
+        const collectionResult = typeof collectionResponse.data === 'string' ? JSON.parse(collectionResponse.data) : collectionResponse.data;
+        const libraryResult = typeof libraryResponse.data === 'string' ? JSON.parse(libraryResponse.data) : libraryResponse.data;
         const tagSections = [
             App.createTagSection({ id: '0', label: 'genres', tags: [] }),
             App.createTagSection({ id: '1', label: 'tags', tags: [] }),
@@ -2869,12 +2859,11 @@ class Paperback extends types_1.Source {
         // For each tag, we append a type identifier to its id and capitalize its label
         tagSections[0].tags = genresResult.map((elem) => App.createTag({ id: 'genre-' + elem, label: (0, exports.capitalize)(elem) }));
         tagSections[1].tags = tagsResult.map((elem) => App.createTag({ id: 'tag-' + elem, label: (0, exports.capitalize)(elem) }));
-        tagSections[2].tags = collectionResult.content?.map((elem) => App.createTag({ id: 'collection-' + elem.id, label: (0, exports.capitalize)(elem.name) })) ?? [];
+        tagSections[2].tags = collectionResult.content.map((elem) => App.createTag({ id: 'collection-' + elem.id, label: (0, exports.capitalize)(elem.name) }));
         tagSections[3].tags = libraryResult.map((elem) => App.createTag({ id: 'library-' + elem.id, label: (0, exports.capitalize)(elem.name) }));
-        if ((collectionResult.content?.length ?? 0) <= 1) {
+        if (collectionResult.content.length <= 1) {
             tagSections.splice(2, 1);
         }
-        console.log("Yada burada olabilir");
         return tagSections;
     }
     async getMangaDetails(mangaId) {
@@ -2884,12 +2873,10 @@ class Paperback extends types_1.Source {
         const komgaAPI = await (0, Common_1.getKomgaAPI)(this.stateManager);
         const request = App.createRequest({
             url: `${komgaAPI}/series/${mangaId}`,
-            method: 'GET'
+            method: 'GET',
         });
         const response = await this.requestManager.schedule(request, 1);
-        const result = typeof response.data === 'string'
-            ? JSON.parse(response.data)
-            : response.data;
+        const result = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
         const metadata = result.metadata;
         const booksMetadata = result.booksMetadata;
         const tagSections = [
@@ -2920,7 +2907,7 @@ class Paperback extends types_1.Source {
                 author: authors.join(', '),
                 desc: metadata.summary ? metadata.summary : booksMetadata.summary,
                 tags: tagSections,
-            })
+            }),
         });
     }
     async getChapters(mangaId) {
@@ -2931,24 +2918,20 @@ class Paperback extends types_1.Source {
         const booksRequest = App.createRequest({
             url: `${komgaAPI}/series/${mangaId}/books`,
             param: '?unpaged=true&media_status=READY&deleted=false',
-            method: 'GET'
+            method: 'GET',
         });
         const booksResponse = await this.requestManager.schedule(booksRequest, 1);
-        const booksResult = typeof booksResponse.data === 'string'
-            ? JSON.parse(booksResponse.data)
-            : booksResponse.data;
+        const booksResult = typeof booksResponse.data === 'string' ? JSON.parse(booksResponse.data) : booksResponse.data;
         const chapters = [];
         // Chapters language is only available on the serie page
         const serieRequest = App.createRequest({
             url: `${komgaAPI}/series/${mangaId}`,
-            method: 'GET'
+            method: 'GET',
         });
         const serieResponse = await this.requestManager.schedule(serieRequest, 1);
-        const serieResult = typeof serieResponse.data === 'string'
-            ? JSON.parse(serieResponse.data)
-            : serieResponse.data;
+        const serieResult = typeof serieResponse.data === 'string' ? JSON.parse(serieResponse.data) : serieResponse.data;
         const languageCode = (0, Languages_1.parseLangCode)(serieResult.metadata.language);
-        for (const book of booksResult.content ?? []) {
+        for (const book of booksResult.content) {
             chapters.push(App.createChapter({
                 id: book.id,
                 chapNum: parseFloat(book.metadata.number),
@@ -2956,7 +2939,7 @@ class Paperback extends types_1.Source {
                 name: `${book.metadata.title} (${book.size})`,
                 time: new Date(book.fileLastModified),
                 // @ts-ignore
-                sortingIndex: book.metadata.numberSort
+                sortingIndex: book.metadata.numberSort,
             }));
         }
         return chapters;
@@ -2965,7 +2948,7 @@ class Paperback extends types_1.Source {
         const komgaAPI = await (0, Common_1.getKomgaAPI)(this.stateManager);
         const request = App.createRequest({
             url: `${komgaAPI}/books/${chapterId}/pages`,
-            method: 'GET'
+            method: 'GET',
         });
         const data = await this.requestManager.schedule(request, 1);
         const result = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
@@ -2981,12 +2964,10 @@ class Paperback extends types_1.Source {
         // Determine the preferred reading direction which is only available in the serie metadata
         const serieRequest = App.createRequest({
             url: `${komgaAPI}/series/${mangaId}`,
-            method: 'GET'
+            method: 'GET',
         });
         const serieResponse = await this.requestManager.schedule(serieRequest, 1);
-        const serieResult = typeof serieResponse.data === 'string'
-            ? JSON.parse(serieResponse.data)
-            : serieResponse.data;
+        const serieResult = typeof serieResponse.data === 'string' ? JSON.parse(serieResponse.data) : serieResponse.data;
         let longStrip = false;
         if (['VERTICAL', 'WEBTOON'].includes(serieResult.metadata.readingDirection)) {
             longStrip = true;
@@ -2994,7 +2975,7 @@ class Paperback extends types_1.Source {
         return App.createChapterDetails({
             id: chapterId,
             mangaId: mangaId,
-            pages: pages
+            pages: pages,
         });
     }
     async getSearchResults(searchQuery, metadata) {
@@ -3014,7 +2995,7 @@ class Paperback extends types_1.Source {
                 title: 'Go to source settings to set your Komga server credentials.',
                 items: (0, Common_1.getServerUnavailableMangaTiles)(),
                 containsMoreItems: false,
-                type: 'singleRowNormal'
+                type: 'singleRowNormal',
             });
             sectionCallback(section);
             return;
@@ -3026,7 +3007,7 @@ class Paperback extends types_1.Source {
                 id: 'ondeck',
                 title: 'On Deck',
                 containsMoreItems: false,
-                type: 'singleRowNormal'
+                type: 'singleRowNormal',
             }));
         }
         if (showContinueReading) {
@@ -3034,20 +3015,20 @@ class Paperback extends types_1.Source {
                 id: 'continue',
                 title: 'Continue Reading',
                 containsMoreItems: false,
-                type: 'singleRowNormal'
+                type: 'singleRowNormal',
             }));
         }
         sections.push(App.createHomeSection({
             id: 'new',
             title: 'Recently added series',
             containsMoreItems: true,
-            type: 'singleRowNormal'
+            type: 'singleRowNormal',
         }));
         sections.push(App.createHomeSection({
             id: 'updated',
             title: 'Recently updated series',
             containsMoreItems: true,
-            type: 'singleRowNormal'
+            type: 'singleRowNormal',
         }));
         const promises = [];
         for (const section of sections) {
@@ -3077,27 +3058,23 @@ class Paperback extends types_1.Source {
             const request = App.createRequest({
                 url: apiPath,
                 param: params,
-                method: 'GET'
+                method: 'GET',
             });
             // Get the section data
-            promises.push((async () => {
-                const data = await this.requestManager.schedule(request, 1);
+            promises.push(this.requestManager.schedule(request, 1).then((data) => {
                 const result = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
                 const tiles = [];
-                if (!result.content) {
-                    return;
-                }
                 for (const serie of result.content) {
                     tiles.push(App.createPartialSourceManga({
                         title: serie.metadata.title,
                         image: `${thumbPath}/${serie.id}/thumbnail`,
                         mangaId: serie[idProp],
-                        subtitle: undefined
+                        subtitle: undefined,
                     }));
                 }
                 section.items = tiles;
                 sectionCallback(section);
-            })());
+            }));
         }
         // Make sure the function completes
         await Promise.all(promises);
@@ -3108,28 +3085,27 @@ class Paperback extends types_1.Source {
         const request = App.createRequest({
             url: `${komgaAPI}/series/${homepageSectionId}`,
             param: `?page=${page}&size=${PAGE_SIZE}&deleted=false`,
-            method: 'GET'
+            method: 'GET',
         });
         const data = await this.requestManager.schedule(request, 1);
         const result = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
         const tiles = [];
-        for (const serie of result.content ?? []) {
+        for (const serie of result.content) {
             tiles.push(App.createPartialSourceManga({
                 title: serie.metadata.title,
                 image: `${komgaAPI}/series/${serie.id}/thumbnail`,
                 mangaId: serie.id,
-                subtitle: undefined
+                subtitle: undefined,
             }));
         }
         // If no series were returned we are on the last page
         metadata = tiles.length === 0 ? undefined : { page: page + 1 };
         return App.createPagedResults({
             results: tiles,
-            metadata: metadata
+            metadata: metadata,
         });
     }
     async filterUpdatedManga(mangaUpdatesFoundCallback, time, ids) {
-        console.log("Filtering updated manga");
         const komgaAPI = await (0, Common_1.getKomgaAPI)(this.stateManager);
         // We make requests of PAGE_SIZE titles to `series/updated/` until we got every titles
         // or we got a title which `lastModified` metadata is older than `time`
@@ -3140,15 +3116,15 @@ class Paperback extends types_1.Source {
             const request = App.createRequest({
                 url: `${komgaAPI}/series/updated`,
                 param: `?page=${page}&size=${PAGE_SIZE}&deleted=false`,
-                method: 'GET'
+                method: 'GET',
             });
             const data = await this.requestManager.schedule(request, 1);
             const result = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
-            for (const serie of result.content ?? []) {
+            for (const serie of result.content) {
                 const serieUpdated = new Date(serie.metadata.lastModified);
                 if (serieUpdated >= time) {
-                    if (ids.includes(serie.id)) {
-                        foundIds.push(serie.id);
+                    if (ids.includes(serie)) {
+                        foundIds.push(serie);
                     }
                 }
                 else {
@@ -3157,47 +3133,18 @@ class Paperback extends types_1.Source {
                 }
             }
             // If no series were returned we are on the last page
-            if (result.content?.length === 0) {
+            if (result.content.length === 0) {
                 loadMore = false;
             }
             page = page + 1;
             if (foundIds.length > 0) {
                 mangaUpdatesFoundCallback(App.createMangaUpdates({
-                    ids: foundIds
+                    ids: foundIds,
                 }));
             }
         }
     }
-    async getMangaProgressManagementForm(mangaId) {
-        console.log("Getting manga progress management form");
-        return App.createDUIForm({
-            sections: async () => {
-                return [
-                    App.createDUISection({
-                        id: 'mangaId',
-                        rows: async () => [
-                            App.createDUILabel({
-                                id: 'id',
-                                label: 'Manga id: ' + mangaId,
-                                value: undefined
-                            }),
-                            App.createDUILabel({
-                                id: 'info',
-                                label: 'The app will sync read chapters to the Komga server',
-                                value: undefined
-                            })
-                        ],
-                        isHidden: false
-                    })
-                ];
-            },
-            onSubmit: () => {
-                return Promise.resolve();
-            },
-        });
-    }
     async getMangaProgress(mangaId) {
-        console.log("Getting manga progress");
         const komgaAPI = await (0, Common_1.getKomgaAPI)(this.stateManager);
         if (komgaAPI == null) {
             console.log('Komga API is not set');
@@ -3216,8 +3163,95 @@ class Paperback extends types_1.Source {
             lastReadChapterNumber: result.booksReadCount,
         });
     }
+    async getMangaProgressManagementForm(mangaId) {
+        const tempData = {}; // Temp solution, app is ass
+        const komgaAPI = await (0, Common_1.getKomgaAPI)(this.stateManager);
+        return App.createDUIForm({
+            sections: async () => {
+                const request = App.createRequest({
+                    url: `${komgaAPI}/series/${mangaId}`,
+                    method: 'GET',
+                });
+                const response = await this.requestManager.schedule(request, 1);
+                const result = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+                tempData.booksReadCount = result?.booksReadCount ?? 0;
+                if (result?.id == null) {
+                    return [
+                        App.createDUISection({
+                            id: 'komgaNotAvailableSection',
+                            isHidden: false,
+                            rows: async () => [
+                                App.createDUILabel({
+                                    id: 'komgaNotAvailable',
+                                    label: 'Komga API is no set or available',
+                                }),
+                            ],
+                        }),
+                    ];
+                }
+                // if (anilistManga == null) {
+                //     throw new Error(`Unable to find Manga on Anilist with id ${mangaId}`);
+                // }
+                return [
+                    // Progress
+                    App.createDUISection({
+                        id: 'manage',
+                        header: 'Progress',
+                        isHidden: false,
+                        rows: async () => [
+                            App.createDUIStepper({
+                                id: 'progress',
+                                label: 'Chapter',
+                                //@ts-ignore
+                                value: result.booksReadCount ?? 0,
+                                min: 0,
+                                step: 1,
+                                max: result.booksCount,
+                            }),
+                        ],
+                    }),
+                ];
+            },
+            onSubmit: async (values) => {
+                if (values?.['progress'] == null || values?.['progress'] == tempData?.booksReadCount) {
+                    // No changes
+                    return;
+                }
+                const request = App.createRequest({
+                    url: `${komgaAPI}/series/${mangaId}/books?unpaged=true`,
+                    method: 'GET',
+                });
+                const response = await this.requestManager.schedule(request, 1);
+                const result = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+                if (result?.content == null) {
+                    console.log('No data for series');
+                    return;
+                }
+                // Setting all al unread first
+                await this.requestManager.schedule(App.createRequest({
+                    url: `${komgaAPI}/series/${mangaId}/read-progress`,
+                    method: 'DELETE',
+                    headers: { 'content-type': 'application/json' },
+                }), 1);
+                for (const book of result.content) {
+                    if (book.metadata.numberSort <= values['progress']) {
+                        const request = App.createRequest({
+                            url: `${komgaAPI}/books/${book.id}/read-progress`,
+                            method: 'PATCH',
+                            headers: { 'content-type': 'application/json' },
+                            data: {
+                                'page': null,
+                                'completed': true,
+                            },
+                        });
+                        await this.requestManager.schedule(request, 1);
+                    }
+                }
+                return;
+            },
+        });
+    }
     async processChapterReadActionQueue(actionQueue) {
-        console.log("Processing chapter read actions");
         const chapterReadActions = await actionQueue.queuedChapterReadActions();
         const komgaAPI = await (0, Common_1.getKomgaAPI)(this.stateManager);
         for (const readAction of chapterReadActions) {
@@ -3233,18 +3267,16 @@ class Paperback extends types_1.Source {
                         method: 'PATCH',
                         headers: { 'content-type': 'application/json' },
                         data: {
-                            'page': 1,
-                            'completed': true
-                        }
+                            'page': null,
+                            'completed': true,
+                        },
                     });
                     const response = await this.requestManager.schedule(request, 1);
+                    console.log(`Response for manga id ${readAction.mangaId} is ${response.status}: ${JSON.stringify(response.data)}`);
                     if (response.status < 400) {
-                        console.log(`${readAction.sourceChapterId} chapter marked as read`);
                         await actionQueue.discardChapterReadAction(readAction);
                     }
                     else {
-                        console.log(`${readAction.sourceChapterId} chapter needs to be retried`);
-                        console.log(`${response.status} --- ${response.data}`);
                         await actionQueue.retryChapterReadAction(readAction);
                     }
                 }
