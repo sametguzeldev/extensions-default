@@ -2717,10 +2717,10 @@ const Common_1 = require("./Common");
 //  - getTags() which is called on the homepage
 //  - search method which is called even if the user search in an other source
 exports.PaperbackInfo = {
-    version: '1.3.1',
+    version: '1.3.2',
     name: 'Paperback',
     icon: 'icon.png',
-    author: 'Lemon | Faizan Durrani',
+    author: 'Samet | Lemon | Faizan Durrani',
     authorWebsite: 'https://github.com/FramboisePi',
     description: 'Komga client extension for Paperback',
     contentRating: types_1.ContentRating.EVERYONE,
@@ -3127,6 +3127,7 @@ class Paperback extends types_1.Source {
         });
     }
     async filterUpdatedManga(mangaUpdatesFoundCallback, time, ids) {
+        console.log("Filtering updated manga");
         const komgaAPI = await (0, Common_1.getKomgaAPI)(this.stateManager);
         // We make requests of PAGE_SIZE titles to `series/updated/` until we got every titles
         // or we got a title which `lastModified` metadata is older than `time`
@@ -3166,6 +3167,7 @@ class Paperback extends types_1.Source {
         }
     }
     async getMangaProgressManagementForm(mangaId) {
+        console.log("Getting manga progress management form");
         return App.createDUIForm({
             sections: async () => {
                 return [
@@ -3193,6 +3195,7 @@ class Paperback extends types_1.Source {
         });
     }
     async getMangaProgress(mangaId) {
+        console.log("Getting manga progress");
         const komgaAPI = await (0, Common_1.getKomgaAPI)(this.stateManager);
         if (komgaAPI == null) {
             console.log('Komga API is not set');
@@ -3212,6 +3215,7 @@ class Paperback extends types_1.Source {
         });
     }
     async processChapterReadActionQueue(actionQueue) {
+        console.log("Processing chapter read actions");
         const chapterReadActions = await actionQueue.queuedChapterReadActions();
         const komgaAPI = await (0, Common_1.getKomgaAPI)(this.stateManager);
         for (const readAction of chapterReadActions) {
